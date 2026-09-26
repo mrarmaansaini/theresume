@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+.vercel/
+uploads/
+.cache/
+.npm/
+.DS_Store
+.env
+.env.*
+!.env.example
