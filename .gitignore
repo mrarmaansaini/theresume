@@ -5,6 +5,9 @@ dist/
 uploads/
 .cache/
 .npm/
+coverage/
+*.log
+.vscode/
 .DS_Store
 .env
 .env.*
