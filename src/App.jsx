@@ -51,9 +51,11 @@ import {
   detectRequirements,
   extractEmail,
   guessCandidateName,
+  inferRoleFromResume,
   scoreTone,
 } from './utils/analysis.js';
 import { extractResumeText, MAX_FILE_BYTES } from './utils/fileParser.js';
+import { isTransientAiError } from './utils/aiRetry.js';
 import { downloadScreeningPdf } from './utils/reportPdf.js';
 import {
   analyzeResumeWithAi,
@@ -513,8 +515,13 @@ function AnalyzePage({
     try {
       await onSuggestRole(resumeText);
     } catch (error) {
-      const message = error?.message || 'AI could not complete the role draft. Check Firebase AI Logic and retry.';
-      setFileError(message);
+      const message = String(error?.message || error || '');
+      const isTransientIssue = isTransientAiError(error);
+      if (isTransientIssue) {
+        console.warn('AI role draft unavailable; continuing without AI suggestions.', error);
+        return;
+      }
+      setFileError(message || 'AI could not complete the role draft. Check Firebase AI Logic and retry.');
       throw error;
     }
   };
@@ -1103,7 +1110,14 @@ function App() {
     if (!resumeText.trim()) throw new Error('Upload or paste a resume first.');
     setRoleSuggestionPending(true);
     try {
-      const suggestion = await suggestRoleFromResume(resumeText);
+      let suggestion;
+      try {
+        suggestion = await suggestRoleFromResume(resumeText);
+      } catch (error) {
+        const fallback = inferRoleFromResume(resumeText);
+        console.warn('AI role draft unavailable; using local fallback.', error);
+        suggestion = fallback;
+      }
       setForm((current) => ({
         ...current,
         jobTitle: suggestion.roleTitle || current.jobTitle,
@@ -1143,8 +1157,11 @@ function App() {
           jobDescription: form.jobDescription,
         });
       } catch (error) {
-        showToast(error?.message || 'AI review could not be completed. The resume is still available; check Firebase AI Logic and try again.');
-        return;
+        const message = String(error?.message || error || '');
+        const isTransientIssue = isTransientAiError(error);
+        console.warn(isTransientIssue
+          ? 'AI analysis unavailable; continuing with local match logic.'
+          : `AI analysis failed; continuing with local match logic. Details: ${message}`, error);
       }
     }
     let aiScoredResult = result;

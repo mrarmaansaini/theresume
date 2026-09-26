@@ -134,10 +134,10 @@ async function generateJson(prompt) {
   } catch (error) {
     const message = String(error?.message || error || '');
     if (/app check token is invalid|invalid app.?check token/i.test(message)) {
-      throw new Error('Firebase rejected this browser’s App Check token. In the browser console, copy the Firebase App Check debug token, register it under Firebase Console → App Check → The Resume Web → Manage debug tokens, then reload the app.');
+      throw new Error('App Check validation could not be completed in this browser session. The local match analysis will continue without AI enhancements.');
     }
     if (isTransientAiError(error)) {
-      throw new Error('The AI service is temporarily unavailable. The request was retried automatically; please try again shortly.');
+      throw new Error('The AI service is temporarily unavailable. The local match analysis will continue without AI enhancements.');
     }
     throw error;
   }

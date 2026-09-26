@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { retryTransientAiRequest } from '../src/utils/aiRetry.js';
+import { isTransientAiError, retryTransientAiRequest } from '../src/utils/aiRetry.js';
 
 test('retries temporary AI overloads with bounded backoff', async () => {
   let attempts = 0;
@@ -14,6 +14,25 @@ test('retries temporary AI overloads with bounded backoff', async () => {
   assert.equal(result, 'complete');
   assert.equal(attempts, 3);
   assert.deepEqual(waits, [1000, 2000]);
+});
+
+test('retries rate-limit and quota exhaustion errors', async () => {
+  let attempts = 0;
+  const waits = [];
+  const result = await retryTransientAiRequest(async () => {
+    attempts += 1;
+    if (attempts < 3) throw new Error('Error fetching from model: quota exceeded for the current project');
+    return 'complete';
+  }, async (milliseconds) => waits.push(milliseconds));
+
+  assert.equal(result, 'complete');
+  assert.equal(attempts, 3);
+  assert.deepEqual(waits, [1000, 2000]);
+});
+
+test('treats App Check invalid token errors as transient fallback conditions', () => {
+  const error = new Error('Firebase rejected this browser’s App Check token. Please refresh the page and retry.');
+  assert.equal(isTransientAiError(error), true);
 });
 
 test('does not retry permanent AI errors', async () => {

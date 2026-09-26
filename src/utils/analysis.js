@@ -117,6 +117,55 @@ export function detectRequirements(jobDescription) {
   }));
 }
 
+export function inferRoleFromResume(resumeText) {
+  const text = String(resumeText || '').trim();
+  const cleaned = text.replace(/\s+/g, ' ');
+  const skillNames = findSkills(cleaned).map((skill) => skill.name);
+  const selectedSkills = [...new Set(skillNames.length ? skillNames.slice(0, 8) : ['Communication', 'Problem solving', 'Project management'])];
+
+  const hasDesignSignals = ['Figma', 'Wireframing', 'User research', 'Prototyping', 'Design systems', 'Accessibility', 'UX', 'UI'].some((term) => containsTerm(cleaned, term));
+  const hasAnalyticsSignals = ['Python', 'SQL', 'Tableau', 'Power BI', 'Pandas', 'NumPy', 'scikit-learn', 'Machine learning', 'Deep learning', 'Statistics', 'Data visualization'].some((term) => containsTerm(cleaned, term));
+  const hasFrontendSignals = ['React', 'JavaScript', 'TypeScript', 'Node.js', 'Next.js', 'Vue.js', 'Angular', 'HTML', 'CSS', 'Tailwind CSS', 'REST APIs'].some((term) => containsTerm(cleaned, term));
+  const hasBackendSignals = ['AWS', 'Docker', 'Kubernetes', 'CI/CD', 'REST APIs', 'GraphQL', 'Java', 'Go', 'Python', 'SQL'].some((term) => containsTerm(cleaned, term));
+  const hasProjectSignals = ['Project management', 'Jira', 'Agile', 'Scrum', 'Leadership', 'Stakeholder', 'Roadmap'].some((term) => containsTerm(cleaned, term));
+
+  let roleTitle = 'Generalist Professional';
+  let rationale = 'The target role was inferred from the strongest visible skill and experience signals in the resume.';
+
+  if (hasDesignSignals) {
+    roleTitle = 'Product Designer';
+    rationale = 'Design, research, and prototyping signals suggest a product design role.';
+  } else if (hasAnalyticsSignals) {
+    roleTitle = 'Data Analyst';
+    rationale = 'Analytics and reporting keywords point to a data-focused role.';
+  } else if (hasFrontendSignals) {
+    roleTitle = 'Frontend Engineer';
+    rationale = 'Frontend and JavaScript capabilities suggest a product engineering role.';
+  } else if (hasBackendSignals) {
+    roleTitle = 'Full Stack Engineer';
+    rationale = 'Product delivery and platform tooling point to an engineering role with cross-stack ownership.';
+  } else if (hasProjectSignals) {
+    roleTitle = 'Project Manager';
+    rationale = 'Delivery, planning, and stakeholder language suggest a project leadership role.';
+  }
+
+  const requirementList = selectedSkills.map((name, index) => ({
+    name,
+    priority: index < Math.min(4, selectedSkills.length) ? 'required' : 'preferred',
+  }));
+
+  const summarySkills = selectedSkills.slice(0, 3).join(', ');
+  const description = `We are seeking a ${roleTitle} to contribute to measurable product and delivery outcomes. The role will involve translating requirements into clear execution, collaborating with cross-functional teams, and using ${summarySkills || 'communication and stakeholder coordination'} to improve clarity, quality, and momentum throughout delivery. The ideal candidate brings practical ownership, evidence of relevant experience, and the ability to adapt to fast-changing goals while keeping work grounded in user value and business impact.`;
+
+  return {
+    roleTitle,
+    applicationIntent: 'inferred',
+    rationale,
+    jobDescription: description,
+    requirements: requirementList,
+  };
+}
+
 export function extractEmail(text) {
   return String(text || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
 }

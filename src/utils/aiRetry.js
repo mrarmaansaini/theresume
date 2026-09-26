@@ -5,7 +5,7 @@ export function isTransientAiError(error) {
   const message = String(error?.message || error || '');
   return transientStatuses.has(status)
     || /\[(?:408|429|500|502|503|504)\]/.test(message)
-    || /currently experiencing high demand|temporarily unavailable|overloaded/i.test(message);
+    || /currently experiencing high demand|temporarily unavailable|overloaded|quota exceeded|rate limit|resource exhausted|too many requests|exceeded your current quota|app check token is invalid|invalid app.?check token|firebase rejected.*app check/i.test(message);
 }
 
 export async function retryTransientAiRequest(request, wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))) {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeResume, containsTerm, detectRequirements } from '../src/utils/analysis.js';
+import { analyzeResume, containsTerm, detectRequirements, inferRoleFromResume } from '../src/utils/analysis.js';
 
 test('skill matching recognizes aliases without matching substrings', () => {
   assert.equal(containsTerm('I build with React.js and TypeScript.', 'React'), true);
@@ -39,4 +39,12 @@ test('custom skills can be matched and source resume text is not returned', () =
   assert.equal(result.requirements[0].found, true);
   assert.equal('resumeText' in result, false);
   assert.equal(result.candidateName, 'Kai Chen');
+});
+
+test('local fallback role inference fills a target role when AI is unavailable', () => {
+  const suggestion = inferRoleFromResume('Senior React developer with TypeScript, Node.js, and AWS experience. Built REST APIs and dashboards.');
+  assert.equal(suggestion.roleTitle, 'Frontend Engineer');
+  assert.ok(suggestion.jobDescription.length > 150);
+  assert.ok(Array.isArray(suggestion.requirements));
+  assert.ok(suggestion.requirements.length >= 3);
 });
