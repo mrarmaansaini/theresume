@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_FIREBASE_AI_MODEL': JSON.stringify(process.env.VITE_FIREBASE_AI_MODEL || 'gemini-3.8-flash'),
+    'import.meta.env.VITE_FIREBASE_AI_GROUNDING': JSON.stringify(process.env.VITE_FIREBASE_AI_GROUNDING || 'false'),
+  },
   server: { host: '0.0.0.0', port: 3000, allowedHosts: true },
   preview: { host: '0.0.0.0', port: 3000, allowedHosts: true },
   build: {
