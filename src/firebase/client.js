@@ -494,6 +494,12 @@ Return ONLY valid JSON matching this exact structure:
     demandLevel: isAi || isFinance ? 'Very High Demand · +25% YoY Growth' : 'High Demand · Active Recruitment',
     trendingSkills,
     keyCertifications: keyCerts,
+    careerLevels: [
+      { level: 'Junior / Associate', salary: `$${Math.round(minSalary * 0.75).toLocaleString()} – $${Math.round(minSalary * 0.95).toLocaleString()}`, note: '0–2 yrs · Foundational execution' },
+      { level: 'Mid-Level', salary: `$${Math.round(minSalary * 0.95).toLocaleString()} – $${Math.round(maxSalary * 0.85).toLocaleString()}`, note: '2–5 yrs · Autonomous delivery' },
+      { level: 'Senior (Target)', salary: `$${minSalary.toLocaleString()} – $${maxSalary.toLocaleString()}`, note: '5+ yrs · Leadership & complex execution' },
+      { level: 'Staff / Lead / Director', salary: `$${Math.round(maxSalary).toLocaleString()} – $${Math.round(maxSalary * 1.35).toLocaleString()}+`, note: '8+ yrs · Strategic impact' }
+    ],
     marketSummary: `Current 2026 labor market intelligence indicates robust hiring activity for ${cleanRole}${locText}. Organizations prioritize professionals combining domain mastery with modern digital tooling and verifiable project impact.`,
     sources: [
       { title: 'Global Compensation & Labor Index 2026', url: 'https://www.levels.fyi' },
