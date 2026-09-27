@@ -65,6 +65,18 @@ export const SKILL_CATALOG = [
   { name: 'Financial modeling', group: 'Business & data', aliases: ['financial modeling', 'financial modelling'] },
   { name: 'Market research', group: 'Business & product', aliases: ['market research', 'competitive analysis'] },
   { name: 'Copywriting', group: 'Marketing', aliases: ['copywriting', 'copywriting skills'] },
+  { name: 'Financial modeling', group: 'Finance', aliases: ['financial modeling', 'financial modelling', 'dcf', 'valuation'] },
+  { name: 'Risk management', group: 'Finance', aliases: ['risk management', 'risk assessment', 'compliance'] },
+  { name: 'Financial analysis', group: 'Finance', aliases: ['financial analysis', 'budgeting', 'forecasting'] },
+  { name: 'Clinical documentation', group: 'Healthcare', aliases: ['clinical documentation', 'emr', 'ehr', 'patient care'] },
+  { name: 'Patient advocacy', group: 'Healthcare', aliases: ['patient advocacy', 'triage', 'healthcare administration'] },
+  { name: 'HIPAA compliance', group: 'Healthcare', aliases: ['hipaa', 'healthcare compliance'] },
+  { name: 'Performance marketing', group: 'Marketing', aliases: ['performance marketing', 'ppc', 'paid acquisition', 'meta ads'] },
+  { name: 'Brand strategy', group: 'Marketing', aliases: ['brand strategy', 'brand management', 'positioning'] },
+  { name: 'Contract negotiation', group: 'Legal', aliases: ['contract negotiation', 'legal compliance', 'due diligence'] },
+  { name: 'Talent acquisition', group: 'HR', aliases: ['talent acquisition', 'recruiting', 'hr operations', 'onboarding'] },
+  { name: 'B2B Sales', group: 'Sales', aliases: ['b2b sales', 'enterprise sales', 'pipeline management', 'cold outreach'] },
+  { name: 'Strategic consulting', group: 'Consulting', aliases: ['strategic consulting', 'change management', 'stakeholder management'] },
 ];
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

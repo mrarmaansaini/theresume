@@ -391,20 +391,30 @@ app.post('/api/market-pulse', async (req, res) => {
     });
   }
 
-  const prompt = `Use Google Search to find current 2025/2026 real-world market intelligence for the job role "${roleTitle}"${roleLoc}.
-Find:
-1. Typical 2025/2026 market salary range (entry to senior, e.g. "$120,000 - $175,000 USD/year" or relevant local currency).
-2. Hiring demand level and growth outlook.
-3. Top 3-5 trending skills in demand right now for this role.
-4. Top 2-3 recognized certifications or credential standards.
-5. A concise 2-3 sentence market summary.
+  const prompt = `You are an expert Autonomous Market Intelligence Agent specialized in global labor markets, compensation benchmarking, and industry skill demand across ALL professional fields (including technology, finance, healthcare, marketing, legal, operations, arts, and science).
+Analyze the requested role/profession: "${roleTitle}"${roleLoc}.
+
+Perform a comprehensive search and analysis to extract:
+1. Typical 2025/2026 real-world market compensation range (entry to senior level, formatted clearly with currency).
+2. Current hiring demand level and growth outlook in this specific field.
+3. Top 3-5 trending skills, domain tools, or methodologies in high demand right now for this profession.
+4. Top 2-3 recognized professional certifications, licenses, or credential standards for this field.
+5. Career leveling breakdown across 4 tiers (Junior/Associate, Mid-Level, Senior, Staff/Lead/Director) with typical salary ranges and experience notes.
+6. A concise 2-3 sentence expert market intelligence summary.
+
 Return ONLY valid JSON matching this exact structure:
 {
   "salaryRange": "e.g. $115,000 – $170,000 / yr",
-  "demandLevel": "High / Very High / Moderate",
+  "demandLevel": "High / Very High / Moderate / Rapidly Growing",
   "trendingSkills": ["Skill 1", "Skill 2", "Skill 3", "Skill 4"],
   "keyCertifications": ["Cert 1", "Cert 2"],
-  "marketSummary": "2-3 sentences summarizing the hiring landscape..."
+  "careerLevels": [
+    { "level": "Junior / Associate", "salary": "$80k – $110k", "note": "0–2 yrs · Foundational execution" },
+    { "level": "Mid-Level", "salary": "$110k – $150k", "note": "2–5 yrs · Autonomous delivery" },
+    { "level": "Senior (Target)", "salary": "$145k – $195k", "note": "5+ yrs · Leadership & complex execution" },
+    { "level": "Staff / Lead / Director", "salary": "$190k – $260k+", "note": "8+ yrs · Strategic architectural impact" }
+  ],
+  "marketSummary": "2-3 sentences summarizing the hiring landscape and key drivers for this profession..."
 }`;
 
   try {
@@ -445,6 +455,12 @@ Return ONLY valid JSON matching this exact structure:
       demandLevel: parsed.demandLevel,
       trendingSkills: parsed.trendingSkills || [],
       keyCertifications: parsed.keyCertifications || [],
+      careerLevels: parsed.careerLevels || [
+        { level: "Junior / Associate", salary: "$85k – $115k", note: "0–2 yrs · Foundational execution" },
+        { level: "Mid-Level", salary: "$115k – $155k", note: "2–5 yrs · Autonomous delivery" },
+        { level: "Senior (Target)", salary: "$150k – $195k", note: "5+ yrs · Technical leadership" },
+        { level: "Staff / Lead", salary: "$190k – $250k+", note: "8+ yrs · Strategic impact" }
+      ],
       marketSummary: parsed.marketSummary,
       sources: webSources,
       searchQueries,

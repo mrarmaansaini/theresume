@@ -1696,38 +1696,21 @@ function MarketPulsePage({ onUseRoleInAnalyze, onToast }) {
               <p>Estimated progression for {pulseData.role}.</p>
             </div>
             <div className="market-leveling-list">
-              <div className="leveling-item">
-                <div className="leveling-header">
-                  <strong>Junior / Associate</strong>
-                  <span>$85k – $115k</span>
+              {(pulseData.careerLevels || [
+                { level: 'Junior / Associate', salary: '$85k – $115k', note: '0–2 yrs · Foundational execution' },
+                { level: 'Mid-Level', salary: '$115k – $155k', note: '2–5 yrs · Autonomous delivery' },
+                { level: 'Senior (Target)', salary: '$150k – $195k', note: '5+ yrs · Technical leadership' },
+                { level: 'Staff / Lead', salary: '$190k – $250k+', note: '8+ yrs · Strategic impact' }
+              ]).map((lvl, idx) => (
+                <div key={lvl.level || idx} className={`leveling-item ${idx === 2 ? 'leveling-active' : ''}`}>
+                  <div className="leveling-header">
+                    <strong>{lvl.level}</strong>
+                    <span>{lvl.salary}</span>
+                  </div>
+                  <div className="leveling-track"><span style={{ width: `${35 + idx * 20}%` }} /></div>
+                  <small>{lvl.note || lvl.description}</small>
                 </div>
-                <div className="leveling-track"><span style={{ width: '45%' }} /></div>
-                <small>0–2 yrs · Foundational execution</small>
-              </div>
-              <div className="leveling-item">
-                <div className="leveling-header">
-                  <strong>Mid-Level</strong>
-                  <span>$115k – $155k</span>
-                </div>
-                <div className="leveling-track"><span style={{ width: '65%' }} /></div>
-                <small>2–5 yrs · Autonomous delivery</small>
-              </div>
-              <div className="leveling-item leveling-active">
-                <div className="leveling-header">
-                  <strong>Senior (Target)</strong>
-                  <span>$150k – $195k</span>
-                </div>
-                <div className="leveling-track"><span style={{ width: '85%' }} /></div>
-                <small>5+ yrs · Technical leadership &amp; design</small>
-              </div>
-              <div className="leveling-item">
-                <div className="leveling-header">
-                  <strong>Staff / Lead</strong>
-                  <span>$190k – $250k+</span>
-                </div>
-                <div className="leveling-track"><span style={{ width: '100%' }} /></div>
-                <small>8+ yrs · Cross-team architectural impact</small>
-              </div>
+              ))}
             </div>
           </section>
 
