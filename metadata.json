@@ -1,0 +1,7 @@
+{
+  "name": "The Resume by Logic Ninjas",
+  "description": "Recruiter screening and candidate profile insights with explainable role matching.",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

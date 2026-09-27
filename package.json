@@ -4,12 +4,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "tsx server.ts",
     "build": "vite build",
+    "start": "tsx server.ts",
+    "lint": "vite build",
     "test": "node --test",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
+    "@google/genai": "^2.24.0",
+    "express": "^5.2.1",
     "firebase": "^12.19.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.468.0",
@@ -20,7 +24,9 @@
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.23.15",
     "vite": "^6.0.11"
   }
 }

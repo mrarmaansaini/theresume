@@ -1,0 +1,23 @@
+{
+  "name": "The Resume by Logic Ninjas",
+  "short_name": "The Resume",
+  "description": "Recruiter screening and candidate profile insights with explainable role matching.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#141829",
+  "theme_color": "#141829",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/webapp_icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

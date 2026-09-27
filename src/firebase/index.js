@@ -24,6 +24,14 @@ export async function signInWithGoogle(...args) {
   return (await loadFirebaseClient()).signInWithGoogle(...args);
 }
 
+export async function signInWithGoogleRedirect(...args) {
+  return (await loadFirebaseClient()).signInWithGoogleRedirect(...args);
+}
+
+export async function formatAuthErrorMessage(...args) {
+  return (await loadFirebaseClient()).formatAuthErrorMessage(...args);
+}
+
 export async function signOutUser(...args) {
   return (await loadFirebaseClient()).signOutUser(...args);
 }
@@ -54,4 +62,20 @@ export async function suggestRoleFromResume(...args) {
 
 export async function analyzeResumeWithAi(...args) {
   return (await loadFirebaseClient()).analyzeResumeWithAi(...args);
+}
+
+export async function fetchMarketPulse(...args) {
+  return (await loadFirebaseClient()).fetchMarketPulse(...args);
+}
+
+export async function extractLinkedInProfile(...args) {
+  return (await loadFirebaseClient()).extractLinkedInProfile(...args);
+}
+
+export async function rewriteResumeBullets(...args) {
+  return (await loadFirebaseClient()).rewriteResumeBullets(...args);
+}
+
+export async function evaluateInterviewAnswer(...args) {
+  return (await loadFirebaseClient()).evaluateInterviewAnswer(...args);
 }

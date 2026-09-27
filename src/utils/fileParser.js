@@ -1,4 +1,19 @@
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+// Configure PDF.js worker source safely
+function ensurePdfWorker() {
+  if (pdfjsLib.GlobalWorkerOptions) {
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      const resolvedWorker = typeof pdfWorker === 'string' && pdfWorker
+        ? pdfWorker
+        : (pdfWorker && typeof pdfWorker.default === 'string' ? pdfWorker.default : '');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = resolvedWorker || `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
+    }
+  }
+}
 
 export async function extractResumeText(file) {
   if (!file) throw new Error('Choose a file to continue.');
@@ -28,18 +43,23 @@ export async function extractResumeText(file) {
     return String(result.value || '').trim();
   }
   if (extension === 'pdf') {
-    const [pdfjsLib, workerModule] = await Promise.all([
-      import('pdfjs-dist'),
-      import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-    ]);
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default;
+    ensurePdfWorker();
     const data = new Uint8Array(await file.arrayBuffer());
-    const pdf = await pdfjsLib.getDocument({ data }).promise;
+    const loadingTask = pdfjsLib.getDocument({
+      data,
+      useSystemFonts: true,
+      isEvalSupported: false,
+    });
+    const pdf = await loadingTask.promise;
     const pages = [];
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
       const page = await pdf.getPage(pageNumber);
       const content = await page.getTextContent();
-      pages.push(content.items.map((item) => ('str' in item ? item.str : '')).filter(Boolean).join(' '));
+      const pageText = content.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .filter(Boolean)
+        .join(' ');
+      pages.push(pageText);
     }
     const text = pages.join('\n').trim();
     if (!text) throw new Error('This PDF has no selectable text. Try a text-based PDF or paste the resume text.');
@@ -47,3 +67,4 @@ export async function extractResumeText(file) {
   }
   throw new Error('Unsupported file type. Upload a PDF, DOCX, TXT, JPG, PNG, or WEBP file.');
 }
+
