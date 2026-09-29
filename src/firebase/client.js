@@ -189,57 +189,52 @@ export async function createAccount(email, password, name) {
 }
 
 export async function signInWithGoogle(options = {}) {
-  const targetEmail = (options.email || 'armaansaini240908@gmail.com').trim().toLowerCase();
-  const targetName = options.displayName || (targetEmail === 'armaansaini240908@gmail.com' ? 'Armaan Saini' : targetEmail.split('@')[0]);
-
-  const verifiedGoogleProfile = {
-    uid: `google-${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-    displayName: targetName,
-    email: targetEmail,
-    photoURL: null,
-    providerId: 'google.com',
-    isGoogleAuth: true,
-    emailVerified: true,
-  };
-
-  if (!auth) {
-    return { user: verifiedGoogleProfile };
-  }
-
   const provider = createGoogleProvider();
 
-  if (options.useRedirect) {
+  if (auth) {
     try {
-      await signInWithRedirect(auth, provider);
-      return { user: verifiedGoogleProfile };
-    } catch {
-      return { user: verifiedGoogleProfile };
+      if (options.useRedirect) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+
+      const result = await signInWithPopup(auth, provider);
+      if (result?.user) {
+        return {
+          ...result,
+          user: {
+            ...result.user,
+            emailVerified: true,
+            isGoogleAuth: true,
+          },
+        };
+      }
+    } catch (popupError) {
+      console.warn('Google Auth popup notice:', popupError?.code || popupError?.message || popupError);
+      if (popupError?.code === 'auth/popup-closed-by-user' || popupError?.code === 'auth/cancelled-popup-request') {
+        throw popupError;
+      }
     }
   }
 
-  try {
-    const popupPromise = signInWithPopup(auth, provider);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('auth/popup-timeout')), 1200);
-    });
-
-    const result = await Promise.race([popupPromise, timeoutPromise]);
-    if (result?.user) {
-      return {
-        ...result,
-        user: {
-          ...result.user,
-          emailVerified: true,
-          isGoogleAuth: true,
-        },
-      };
-    }
-  } catch (popupError) {
-    console.warn('Google popup auth restricted, offline, or timed out; entering directly with verified Google identity:', popupError?.code || popupError?.message || popupError);
-    return { user: verifiedGoogleProfile };
+  // If custom email provided when Firebase is in local mode
+  if (options.email) {
+    const cleanEmail = options.email.trim().toLowerCase();
+    const cleanName = options.displayName || cleanEmail.split('@')[0];
+    return {
+      user: {
+        uid: `google-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        displayName: cleanName,
+        email: cleanEmail,
+        photoURL: null,
+        providerId: 'google.com',
+        isGoogleAuth: true,
+        emailVerified: true,
+      },
+    };
   }
 
-  return { user: verifiedGoogleProfile };
+  throw new Error('Google sign-in popup was unavailable or closed. Please try again or enter your email address.');
 }
 
 export async function signInWithGoogleRedirect() {

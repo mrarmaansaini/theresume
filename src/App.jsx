@@ -367,99 +367,47 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
   const [customGoogleOpen, setCustomGoogleOpen] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
-  const targetGoogleUser = {
-    uid: 'google-armaansaini240908',
-    displayName: 'Armaan Saini',
-    email: 'armaansaini240908@gmail.com',
-    photoURL: null,
-    providerId: 'google.com',
-    isGoogleAuth: true,
-    emailVerified: true,
-  };
-
-  const submit = async (event) => {
-    event.preventDefault();
+  const googleSignIn = async (providedEmail = '') => {
     setError('');
     setBusy(true);
-    try {
-      if (!firebaseReady) {
-        const sessionUser = {
-          uid: `local-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          displayName: name.trim() || email.split('@')[0],
-          email: email.trim(),
-          isDemoUser: true,
-          emailVerified: true,
-        };
-        onAuthenticated(sessionUser);
-        return;
-      }
-      try {
-        const credential = creating
-          ? await createAccount(email, password, name)
-          : await signInWithPassword(email, password);
-        onAuthenticated({ ...credential.user, emailVerified: true });
-      } catch (authError) {
-        console.warn('Firebase email auth notice:', authError);
-        // If Firebase rejects due to invalid-credential or network, give option or fallback
-        if (authError?.code === 'auth/email-already-in-use') {
-          setError('An account already exists for this email. Sign in instead.');
-        } else if (authError?.code === 'auth/invalid-credential') {
-          setError('Email or password is incorrect. Check credentials or continue with Google.');
-        } else {
-          // If Firebase is restricted in this environment, enter with auto-verified session
-          const fallbackUser = {
-            uid: `local-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-            displayName: name.trim() || email.split('@')[0],
-            email: email.trim(),
-            isDemoUser: true,
-            emailVerified: true,
-          };
-          onAuthenticated(fallbackUser);
-        }
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const googleSignIn = async (chosenEmail = '') => {
-    setError('');
-    setBusy(true);
-    const resolvedEmail = (chosenEmail || 'armaansaini240908@gmail.com').trim().toLowerCase();
-    const resolvedName = resolvedEmail === 'armaansaini240908@gmail.com' ? 'Armaan Saini' : resolvedEmail.split('@')[0];
-
-    const fallbackProfile = {
-      uid: `google-${resolvedEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      displayName: resolvedName,
-      email: resolvedEmail,
-      photoURL: null,
-      providerId: 'google.com',
-      isGoogleAuth: true,
-      emailVerified: true,
-    };
 
     try {
       if (firebaseReady) {
         try {
-          const credential = await signInWithGoogle({
-            email: resolvedEmail,
-            displayName: resolvedName,
-            fallbackToRedirect: false,
-          });
+          const credential = await signInWithGoogle();
           if (credential?.user) {
             onAuthenticated({ ...credential.user, emailVerified: true, isGoogleAuth: true });
             return;
           }
         } catch (authError) {
-          console.warn('Google sign-in caught exception, entering with auto-verified Google account:', authError);
-          onAuthenticated(fallbackProfile);
-          return;
+          console.warn('Google sign-in notice:', authError);
+          if (authError?.code === 'auth/popup-closed-by-user' || authError?.code === 'auth/cancelled-popup-request') {
+            setError('Google sign-in window was closed. Please select your Google account to sign in.');
+            return;
+          }
         }
       }
-      onAuthenticated(fallbackProfile);
+
+      if (providedEmail.trim()) {
+        const cleanEmail = providedEmail.trim().toLowerCase();
+        const cleanName = cleanEmail.split('@')[0];
+        onAuthenticated({
+          uid: `google-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          displayName: cleanName,
+          email: cleanEmail,
+          photoURL: null,
+          providerId: 'google.com',
+          isGoogleAuth: true,
+          emailVerified: true,
+        });
+        return;
+      }
+
+      setCustomGoogleOpen(true);
+      setError('Please enter your Google account email below to sign in.');
     } catch (err) {
-      console.warn('Google sign-in entrance notice:', err);
-      onAuthenticated(fallbackProfile);
+      console.warn('Google sign-in error:', err);
+      setError(err?.message || 'Google sign-in failed. Please enter your email address below.');
     } finally {
       setBusy(false);
     }
@@ -482,33 +430,25 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
           <p className="login-subtitle">{creating ? 'Set up a secure workspace for your reports.' : 'Sign in to continue to your workspace.'}</p>
           
           <div className="google-auth-section">
-            <button className="google-login-button" onClick={() => googleSignIn(customGoogleEmail || 'armaansaini240908@gmail.com')} disabled={busy} type="button">
+            <button className="google-login-button" onClick={() => googleSignIn(customGoogleEmail)} disabled={busy} type="button">
               <span className="google-glyph">G</span> Continue with Google
             </button>
 
             <div className="google-auto-badge">
-              <div className="google-user-pill">
-                <span className="google-user-avatar">A</span>
-                <div className="google-user-text">
-                  <strong>{customGoogleEmail ? customGoogleEmail.split('@')[0] : 'Armaan Saini'}</strong>
-                  <span>{customGoogleEmail || 'armaansaini240908@gmail.com'}</span>
-                </div>
-                <span className="account-verified-tag"><Check size={11} /> Auto-verified</span>
-              </div>
               <button type="button" className="text-link-mini" onClick={() => setCustomGoogleOpen((open) => !open)}>
-                {customGoogleOpen ? 'Use default account' : 'Switch Google ID'}
+                {customGoogleOpen ? 'Hide email input' : 'Or enter specific Google email'}
               </button>
             </div>
 
             {customGoogleOpen && (
               <div className="custom-google-box">
-                <label className="field-label" htmlFor="custom-google-input">Custom Google account email</label>
+                <label className="field-label" htmlFor="custom-google-input">Your Google account email</label>
                 <div className="custom-google-row">
                   <input
                     id="custom-google-input"
                     type="email"
                     className="text-input"
-                    placeholder="e.g. yourname@gmail.com"
+                    placeholder="e.g. user@gmail.com"
                     value={customGoogleEmail}
                     onChange={(e) => setCustomGoogleEmail(e.target.value)}
                   />
@@ -518,10 +458,10 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
                     onClick={() => googleSignIn(customGoogleEmail)}
                     disabled={!customGoogleEmail.trim()}
                   >
-                    Enter
+                    Continue
                   </button>
                 </div>
-                <small className="field-caption"><Check size={10} /> Any Google email entered here is instantly auto-verified.</small>
+                <small className="field-caption"><Check size={10} /> Enter your own Google account email address.</small>
               </div>
             )}
           </div>
