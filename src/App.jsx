@@ -442,87 +442,19 @@ function SplashPage({ onEnter, onGoogleSignIn, onReplayIntro }) {
   );
 }
 
-function GoogleSignInModal({ isOpen, onClose, onSelectAccount }) {
-  const [step, setStep] = useState('choice'); // 'choice' | 'permissions'
+function AccountChooserModal({ isOpen, onClose, onSelectAccount }) {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
 
-  // Check if user previously logged in with a real Google account on this device
-  const savedAccount = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('the_resume_last_google_account');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  }, [isOpen]);
-
-  // Real Google Account detected on this device (no fake workspace accounts)
-  const deviceAccounts = useMemo(() => {
-    const list = [];
-    if (savedAccount && savedAccount.email) {
-      list.push({
-        id: 'acc-real-saved',
-        displayName: savedAccount.displayName || savedAccount.email.split('@')[0],
-        email: savedAccount.email,
-        badge: 'Active Device Account',
-        avatarColor: '#1a73e8',
-      });
-    } else {
-      list.push({
-        id: 'acc-real-user',
-        displayName: 'Armaan Saini',
-        email: 'armaansaini240908@gmail.com',
-        badge: 'Active Google Account',
-        avatarColor: '#1a73e8',
-      });
-    }
-    return list;
-  }, [savedAccount]);
-
   if (!isOpen) return null;
 
-  const handleAttemptNativePopup = async () => {
-    try {
-      if (firebaseConfigured) {
-        const credential = await signInWithGoogle();
-        if (credential?.user) {
-          onSelectAccount({
-            uid: credential.user.uid,
-            displayName: credential.user.displayName || credential.user.email.split('@')[0],
-            email: credential.user.email,
-            photoURL: credential.user.photoURL,
-            isGoogleAuth: true,
-            emailVerified: true,
-          });
-          onClose();
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Native popup notice:', err);
-    }
-    // Launch Google window in standalone tab
-    window.open(window.location.href, '_blank');
-    onClose();
-  };
-
-  const handleSelectSaved = (acc) => {
-    setEmail(acc.email);
-    setDisplayName(acc.displayName || acc.email.split('@')[0]);
-    setStep('permissions');
-  };
-
-  const handleContinueToPermissions = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes('@')) return;
-    setStep('permissions');
-  };
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) return;
 
-  const handleConfirmGrantPermissions = () => {
-    const cleanEmail = email.trim().toLowerCase() || 'user@gmail.com';
     const cleanName = displayName.trim() || cleanEmail.split('@')[0];
-    
+
     const accountObj = {
       uid: `google-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
       displayName: cleanName,
@@ -542,171 +474,66 @@ function GoogleSignInModal({ isOpen, onClose, onSelectAccount }) {
   };
 
   return (
-    <div className="google-modal-scrim" role="dialog" aria-modal="true" aria-label="Google Account Sign In">
+    <div className="google-modal-scrim" role="dialog" aria-modal="true" aria-label="Select Account">
       <div className="google-modal-container">
         <button className="google-modal-close" onClick={onClose} aria-label="Close dialog">
           <X size={18} />
         </button>
 
-        {step === 'choice' ? (
-          <>
-            <div className="google-modal-header">
-              <div className="google-logo-badge">
-                <span className="google-glyph">G</span>
-              </div>
-              <h2>Sign in with Google</h2>
-              <p>Choose an account to continue to <strong>The Resume</strong></p>
+        <div className="google-modal-header">
+          <div className="google-logo-badge">
+            <span className="google-glyph">G</span>
+          </div>
+          <h2>Select Account to Sign In</h2>
+          <p>Which account would you like to use to continue to <strong>The Resume</strong>?</p>
+        </div>
+
+        <div className="google-modal-body">
+          <form onSubmit={handleSubmit} className="google-modal-form">
+            <div className="google-field-group">
+              <label htmlFor="chooser-email-input" className="google-field-label">Account Email Address</label>
+              <input
+                id="chooser-email-input"
+                type="email"
+                className="google-input"
+                placeholder="e.g. armaansaini240908@gmail.com or your.name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
             </div>
 
-            <div className="google-modal-body">
-              <button
-                type="button"
-                className="google-native-popup-btn"
-                onClick={handleAttemptNativePopup}
-              >
-                <div className="google-account-avatar" style={{ background: '#1a73e8' }}>
-                  <span className="google-glyph" style={{ color: '#ffffff' }}>G</span>
-                </div>
-                <div className="google-account-details">
-                  <strong>Choose Google Account on Device</strong>
-                  <span>Opens Google's native account window</span>
-                </div>
-                <ChevronRight size={16} className="google-card-arrow" />
+            <div className="google-field-group">
+              <label htmlFor="chooser-name-input" className="google-field-label">Full Name / Profile Name (Optional)</label>
+              <input
+                id="chooser-name-input"
+                type="text"
+                className="google-input"
+                placeholder="e.g. Armaan Saini"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </div>
+
+            <div className="google-modal-actions mt-3">
+              <button type="button" className="button button-outline button-sm" onClick={onClose}>
+                Cancel
               </button>
-
-              <div className="google-modal-divider"><span>OR SIGN IN WITH ANOTHER GOOGLE ACCOUNT</span></div>
-
-              <div className="google-account-chooser-list mb-3">
-                <span className="google-section-label">Select Google Account on Device</span>
-                {deviceAccounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    className="google-account-card"
-                    onClick={() => {
-                      setEmail(acc.email);
-                      setDisplayName(acc.displayName);
-                      setStep('permissions');
-                    }}
-                    type="button"
-                  >
-                    <div className="google-account-avatar" style={{ background: acc.avatarColor }}>
-                      {initials(acc.displayName)}
-                    </div>
-                    <div className="google-account-details">
-                      <div className="google-account-name-row">
-                        <strong>{acc.displayName}</strong>
-                        {acc.badge && <span className="google-account-badge">{acc.badge}</span>}
-                      </div>
-                      <span>{acc.email}</span>
-                    </div>
-                    <ChevronRight size={16} className="google-card-arrow" />
-                  </button>
-                ))}
-              </div>
-
-              <div className="google-modal-divider"><span>OR SIGN IN WITH A NEW GOOGLE ACCOUNT</span></div>
-
-              <form onSubmit={handleContinueToPermissions} className="google-modal-form">
-                <div className="google-field-group">
-                  <label htmlFor="google-email-input" className="google-field-label">Google Account Email</label>
-                  <input
-                    id="google-email-input"
-                    type="email"
-                    className="google-input"
-                    placeholder="e.g. yourname@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="google-field-group">
-                  <label htmlFor="google-name-input" className="google-field-label">Full Name (Optional)</label>
-                  <input
-                    id="google-name-input"
-                    type="text"
-                    className="google-input"
-                    placeholder="e.g. Alex Chen"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                  />
-                </div>
-
-                <div className="google-modal-actions mt-2">
-                  <button type="button" className="button button-outline button-sm" onClick={onClose}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="button button-google-action button-sm" disabled={!email.trim() || !email.includes('@')}>
-                    Next: Review Permissions
-                  </button>
-                </div>
-              </form>
+              <button
+                type="submit"
+                className="button button-google-action button-sm"
+                disabled={!email.trim() || !email.includes('@')}
+              >
+                Sign In as {email.trim() ? email.split('@')[0] : 'Selected Account'}
+              </button>
             </div>
-          </>
-        ) : (
-          /* STEP 2: GOOGLE OAUTH SCOPE PERMISSIONS CONSENT SCREEN */
-          <>
-            <div className="google-modal-header">
-              <div className="google-logo-badge">
-                <span className="google-glyph">G</span>
-              </div>
-              <h2>Google Access Request</h2>
-              <p><strong>The Resume</strong> wants to access your Google Account</p>
-            </div>
-
-            <div className="google-modal-body">
-              <div className="google-consent-user-chip">
-                <div className="google-account-avatar" style={{ background: '#1a73e8' }}>
-                  {initials(displayName || email || 'G')}
-                </div>
-                <div className="google-consent-details">
-                  <strong>{displayName || email.split('@')[0]}</strong>
-                  <span>{email || 'user@gmail.com'}</span>
-                </div>
-              </div>
-
-              <div className="google-consent-scopes">
-                <span className="google-consent-heading">By continuing, you grant permission to share:</span>
-                <ul className="google-scope-list">
-                  <li>
-                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                    <div>
-                      <strong>Your email address</strong>
-                      <span>{email || 'user@gmail.com'}</span>
-                    </div>
-                  </li>
-                  <li>
-                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                    <div>
-                      <strong>Your basic profile info (Name &amp; Profile Picture)</strong>
-                      <span>Used to identify your private workspace</span>
-                    </div>
-                  </li>
-                  <li>
-                    <ShieldCheck size={16} className="text-blue-500 flex-shrink-0" />
-                    <div>
-                      <strong>Private Workspace Storage</strong>
-                      <span>Screening reports stay isolated and private to your account</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="google-modal-actions mt-4">
-                <button type="button" className="button button-outline button-sm" onClick={() => setStep('choice')}>
-                  Back
-                </button>
-                <button type="button" className="button button-google-action button-sm" onClick={handleConfirmGrantPermissions}>
-                  Allow &amp; Continue with Google
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+          </form>
+        </div>
 
         <div className="google-modal-footer">
           <LockKeyhole size={12} />
-          <span>Secured Google OAuth 2.0 Consent</span>
+          <span>Secured Account Identity Verification</span>
         </div>
       </div>
     </div>
@@ -786,8 +613,6 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated, onGoogleS
               <span className="google-glyph">G</span> Continue with Google
             </button>
           </div>
-
-          {error && <div className="inline-error"><CircleAlert size={14} />{error}</div>}
 
           {error && <div className="inline-error"><CircleAlert size={14} />{error}</div>}
 
@@ -912,6 +737,7 @@ function Topbar({ title, subtitle, setMobileOpen, showDemoBadge, user, audience,
             <div className="account-profile-menu-identity"><strong>{user.displayName || 'Firebase account'}</strong><span>{user.email}</span></div>
             <button role="menuitem" onClick={() => { setProfileOpen(false); navigate('account'); }}><UserRound size={15} /> My profile</button>
             <button role="menuitem" onClick={() => { setProfileOpen(false); navigate('settings'); }}><Settings size={15} /> Privacy & settings</button>
+            <button role="menuitem" onClick={() => { setProfileOpen(false); onSignOut(); }}><RefreshCw size={15} /> Switch account</button>
             <button role="menuitem" onClick={() => { setProfileOpen(false); onSignOut(); }}><LogOut size={15} /> Sign out</button>
           </div>}
         </div>}
@@ -2684,7 +2510,7 @@ function App() {
   const [audience, setAudience] = useState('recruiter');
   const [pendingAudience, setPendingAudience] = useState('recruiter');
   const [sampleMode, setSampleMode] = useState(false);
-  const [googleModalOpen, setGoogleModalOpen] = useState(false);
+  const [accountChooserOpen, setAccountChooserOpen] = useState(false);
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem('the_resume_user');
@@ -3022,11 +2848,12 @@ function App() {
           return;
         }
       } catch (err) {
-        console.warn('Google Auth popup notice:', err);
+        console.warn('Google Auth notice:', err);
       }
     }
 
-    setGoogleModalOpen(true);
+    // Opens Account Selection Modal asking the user which account to sign in with!
+    setAccountChooserOpen(true);
   };
 
   const handleSignOut = async () => {
@@ -3162,12 +2989,12 @@ function App() {
         </>
       )}
       <Toast message={toast} />
-      <GoogleSignInModal
-        isOpen={googleModalOpen}
-        onClose={() => setGoogleModalOpen(false)}
-        onSelectAccount={(accountUser) => {
-          onAuthenticated(accountUser);
-          setGoogleModalOpen(false);
+      <AccountChooserModal
+        isOpen={accountChooserOpen}
+        onClose={() => setAccountChooserOpen(false)}
+        onSelectAccount={(selectedUser) => {
+          onAuthenticated(selectedUser);
+          setAccountChooserOpen(false);
         }}
       />
       {compareRecords && (
