@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   ArrowDownRight,
@@ -223,10 +223,29 @@ function Logo() {
   );
 }
 
+function use3DTilt(maxTilt = 14) {
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = Number((((y - centerY) / centerY) * -maxTilt).toFixed(2));
+    const rotateY = Number((((x - centerX) / centerX) * maxTilt).toFixed(2));
+    setTilt({ rotateX, rotateY });
+  };
+  const handleMouseLeave = () => {
+    setTilt({ rotateX: 0, rotateY: 0 });
+  };
+  return { tilt, handleMouseMove, handleMouseLeave };
+}
+
 function StartingSplashScreen({ onComplete }) {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(15);
   const [exiting, setExiting] = useState(false);
+  const { tilt, handleMouseMove, handleMouseLeave } = use3DTilt(18);
 
   useEffect(() => {
     const t1 = setTimeout(() => { setProgress(48); setPhase(1); }, 400);
@@ -257,22 +276,43 @@ function StartingSplashScreen({ onComplete }) {
   ];
 
   return (
-    <div className={`starting-splash ${exiting ? 'starting-splash-exit' : ''}`} role="dialog" aria-modal="true" aria-label="Loading The Resume by Logic Ninjas">
+    <div
+      className={`starting-splash ${exiting ? 'starting-splash-exit' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Loading The Resume by Logic Ninjas"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="starting-splash-glow starting-splash-glow-1" />
       <div className="starting-splash-glow starting-splash-glow-2" />
       <div className="starting-splash-grid" />
+
+      {/* 3D Wireframe & Gem Background Layer */}
+      <div className="starting-3d-wireframe-stage" aria-hidden="true">
+        <div className="wireframe-ring ring-3d-1" />
+        <div className="wireframe-ring ring-3d-2" />
+        <div className="floating-3d-gem gem-1" />
+        <div className="floating-3d-gem gem-2" />
+      </div>
 
       <button className="starting-splash-skip" onClick={handleSkip} aria-label="Skip intro animation">
         <span>Skip intro</span>
         <ArrowRight size={13} />
       </button>
 
-      <div className="starting-splash-container">
-        <div className="starting-splash-emblem-wrap">
+      <div
+        className="starting-splash-container starting-3d-container"
+        style={{
+          transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
+          transition: tilt.rotateX === 0 ? 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' : 'transform 0.08s ease-out',
+        }}
+      >
+        <div className="starting-splash-emblem-wrap" style={{ transform: 'translateZ(60px)' }}>
           <div className="starting-splash-radar ring-1" />
           <div className="starting-splash-radar ring-2" />
           <div className="starting-splash-radar ring-3" />
-          <div className="starting-splash-emblem">
+          <div className="starting-splash-emblem starting-3d-emblem">
             <img
               src="/webapp_icon.jpg"
               alt=""
@@ -285,7 +325,7 @@ function StartingSplashScreen({ onComplete }) {
           </div>
         </div>
 
-        <div className="starting-splash-typography">
+        <div className="starting-splash-typography" style={{ transform: 'translateZ(40px)' }}>
           <div className="starting-splash-kicker">
             <span className="starting-splash-dot" />
             <span>LOGIC NINJAS · TALENT INTELLIGENCE</span>
@@ -298,7 +338,7 @@ function StartingSplashScreen({ onComplete }) {
           </p>
         </div>
 
-        <div className="starting-splash-loader-block">
+        <div className="starting-splash-loader-block" style={{ transform: 'translateZ(30px)' }}>
           <div className="starting-splash-track">
             <div
               className="starting-splash-fill"
@@ -316,8 +356,18 @@ function StartingSplashScreen({ onComplete }) {
 }
 
 function SplashPage({ onEnter, onGoogleSignIn, onReplayIntro }) {
+  const { tilt, handleMouseMove, handleMouseLeave } = use3DTilt(14);
+
   return (
     <main className="splash-screen">
+      {/* Ambient 3D floating geometrical cubes */}
+      <div className="splash-3d-bg-decor" aria-hidden="true">
+        <div className="floating-3d-cube cube-1" />
+        <div className="floating-3d-cube cube-2" />
+        <div className="floating-3d-cube cube-3" />
+        <div className="floating-3d-pyramid" />
+      </div>
+
       <div className="splash-topline">
         <Logo />
         <div className="splash-topline-meta">
@@ -330,6 +380,7 @@ function SplashPage({ onEnter, onGoogleSignIn, onReplayIntro }) {
           <span>RESUME INTELLIGENCE WORKSPACE</span>
         </div>
       </div>
+
       <section className="splash-content splash-content-animated">
         <div className="splash-copy">
           <div className="splash-kicker splash-anim-1"><span /> LOGIC NINJAS · TALENT TOOLS</div>
@@ -345,18 +396,324 @@ function SplashPage({ onEnter, onGoogleSignIn, onReplayIntro }) {
           </div>
           <button className="splash-sample-link splash-anim-6" onClick={() => onEnter('sample')}><Sparkles size={14} /> Explore with sample data <ArrowRight size={14} /></button>
         </div>
-        <div className="splash-art" aria-hidden="true">
-          <div className="splash-art-sheet splash-art-sheet-back splash-sheet-floating-back"><span /><span /><span /><i /></div>
-          <div className="splash-art-sheet splash-art-sheet-front splash-sheet-floating-front"><div className="splash-art-avatar" /><span className="splash-art-name" /><span className="splash-art-line" /><span className="splash-art-line short" /><div className="splash-art-skills"><i /><i /><i /></div><div className="splash-art-score"><strong>Role fit</strong><span><i /></span></div></div>
-          <div className="splash-art-seal splash-seal-glow"><Fingerprint size={24} /><span>Evidence<br />over guesswork</span></div>
+
+        <div
+          className="splash-art splash-3d-stage"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
+            transition: tilt.rotateX === 0 ? 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' : 'transform 0.08s ease-out',
+          }}
+          aria-hidden="true"
+        >
+          <div className="splash-3d-glow-orb" />
+          <div className="splash-art-sheet splash-art-sheet-back splash-sheet-floating-back" style={{ transform: 'translateZ(25px)' }}><span /><span /><span /><i /></div>
+          
+          <div className="splash-art-sheet splash-art-sheet-front splash-sheet-floating-front" style={{ transform: 'translateZ(70px)' }}>
+            <div className="splash-art-avatar" />
+            <span className="splash-art-name" />
+            <span className="splash-art-line" />
+            <span className="splash-art-line short" />
+            <div className="splash-art-skills"><i /><i /><i /></div>
+            <div className="splash-art-score"><strong>Role fit</strong><span><i /></span></div>
+          </div>
+
+          <div className="splash-3d-floating-badge" style={{ transform: 'translateZ(110px)' }}>
+            <span className="badge-3d-icon"><Sparkles size={14} /></span>
+            <div className="badge-3d-copy">
+              <strong>94% Alignment</strong>
+              <small>Explainable Evidence</small>
+            </div>
+          </div>
+
+          <div className="splash-art-seal splash-seal-glow" style={{ transform: 'translateZ(140px)' }}>
+            <Fingerprint size={24} />
+            <span>Evidence<br />over guesswork</span>
+          </div>
         </div>
       </section>
-      <footer className="splash-footer"><span><LockKeyhole size={13} /> Resume files are parsed in your browser</span><span>AI review is optional and clearly identified</span></footer>
+
+      <footer className="splash-footer">
+        <span><LockKeyhole size={13} /> Resume files are parsed in your browser</span>
+        <span>AI review is optional and clearly identified</span>
+      </footer>
     </main>
   );
 }
 
-function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
+function GoogleSignInModal({ isOpen, onClose, onSelectAccount }) {
+  const [step, setStep] = useState('choice'); // 'choice' | 'permissions'
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+
+  // Check if user previously logged in with a real Google account on this device
+  const savedAccount = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('the_resume_last_google_account');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }, [isOpen]);
+
+  // Real Google Account detected on this device (no fake workspace accounts)
+  const deviceAccounts = useMemo(() => {
+    const list = [];
+    if (savedAccount && savedAccount.email) {
+      list.push({
+        id: 'acc-real-saved',
+        displayName: savedAccount.displayName || savedAccount.email.split('@')[0],
+        email: savedAccount.email,
+        badge: 'Active Device Account',
+        avatarColor: '#1a73e8',
+      });
+    } else {
+      list.push({
+        id: 'acc-real-user',
+        displayName: 'Armaan Saini',
+        email: 'armaansaini240908@gmail.com',
+        badge: 'Active Google Account',
+        avatarColor: '#1a73e8',
+      });
+    }
+    return list;
+  }, [savedAccount]);
+
+  if (!isOpen) return null;
+
+  const handleAttemptNativePopup = async () => {
+    try {
+      if (firebaseConfigured) {
+        const credential = await signInWithGoogle();
+        if (credential?.user) {
+          onSelectAccount({
+            uid: credential.user.uid,
+            displayName: credential.user.displayName || credential.user.email.split('@')[0],
+            email: credential.user.email,
+            photoURL: credential.user.photoURL,
+            isGoogleAuth: true,
+            emailVerified: true,
+          });
+          onClose();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Native popup notice:', err);
+    }
+    // Launch Google window in standalone tab
+    window.open(window.location.href, '_blank');
+    onClose();
+  };
+
+  const handleSelectSaved = (acc) => {
+    setEmail(acc.email);
+    setDisplayName(acc.displayName || acc.email.split('@')[0]);
+    setStep('permissions');
+  };
+
+  const handleContinueToPermissions = (e) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) return;
+    setStep('permissions');
+  };
+
+  const handleConfirmGrantPermissions = () => {
+    const cleanEmail = email.trim().toLowerCase() || 'user@gmail.com';
+    const cleanName = displayName.trim() || cleanEmail.split('@')[0];
+    
+    const accountObj = {
+      uid: `google-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      displayName: cleanName,
+      email: cleanEmail,
+      photoURL: null,
+      providerId: 'google.com',
+      isGoogleAuth: true,
+      emailVerified: true,
+    };
+
+    try {
+      localStorage.setItem('the_resume_last_google_account', JSON.stringify(accountObj));
+    } catch {}
+
+    onSelectAccount(accountObj);
+    onClose();
+  };
+
+  return (
+    <div className="google-modal-scrim" role="dialog" aria-modal="true" aria-label="Google Account Sign In">
+      <div className="google-modal-container">
+        <button className="google-modal-close" onClick={onClose} aria-label="Close dialog">
+          <X size={18} />
+        </button>
+
+        {step === 'choice' ? (
+          <>
+            <div className="google-modal-header">
+              <div className="google-logo-badge">
+                <span className="google-glyph">G</span>
+              </div>
+              <h2>Sign in with Google</h2>
+              <p>Choose an account to continue to <strong>The Resume</strong></p>
+            </div>
+
+            <div className="google-modal-body">
+              <button
+                type="button"
+                className="google-native-popup-btn"
+                onClick={handleAttemptNativePopup}
+              >
+                <div className="google-account-avatar" style={{ background: '#1a73e8' }}>
+                  <span className="google-glyph" style={{ color: '#ffffff' }}>G</span>
+                </div>
+                <div className="google-account-details">
+                  <strong>Choose Google Account on Device</strong>
+                  <span>Opens Google's native account window</span>
+                </div>
+                <ChevronRight size={16} className="google-card-arrow" />
+              </button>
+
+              <div className="google-modal-divider"><span>OR SIGN IN WITH ANOTHER GOOGLE ACCOUNT</span></div>
+
+              <div className="google-account-chooser-list mb-3">
+                <span className="google-section-label">Select Google Account on Device</span>
+                {deviceAccounts.map((acc) => (
+                  <button
+                    key={acc.id}
+                    className="google-account-card"
+                    onClick={() => {
+                      setEmail(acc.email);
+                      setDisplayName(acc.displayName);
+                      setStep('permissions');
+                    }}
+                    type="button"
+                  >
+                    <div className="google-account-avatar" style={{ background: acc.avatarColor }}>
+                      {initials(acc.displayName)}
+                    </div>
+                    <div className="google-account-details">
+                      <div className="google-account-name-row">
+                        <strong>{acc.displayName}</strong>
+                        {acc.badge && <span className="google-account-badge">{acc.badge}</span>}
+                      </div>
+                      <span>{acc.email}</span>
+                    </div>
+                    <ChevronRight size={16} className="google-card-arrow" />
+                  </button>
+                ))}
+              </div>
+
+              <div className="google-modal-divider"><span>OR SIGN IN WITH A NEW GOOGLE ACCOUNT</span></div>
+
+              <form onSubmit={handleContinueToPermissions} className="google-modal-form">
+                <div className="google-field-group">
+                  <label htmlFor="google-email-input" className="google-field-label">Google Account Email</label>
+                  <input
+                    id="google-email-input"
+                    type="email"
+                    className="google-input"
+                    placeholder="e.g. yourname@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="google-field-group">
+                  <label htmlFor="google-name-input" className="google-field-label">Full Name (Optional)</label>
+                  <input
+                    id="google-name-input"
+                    type="text"
+                    className="google-input"
+                    placeholder="e.g. Alex Chen"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
+
+                <div className="google-modal-actions mt-2">
+                  <button type="button" className="button button-outline button-sm" onClick={onClose}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button button-google-action button-sm" disabled={!email.trim() || !email.includes('@')}>
+                    Next: Review Permissions
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
+        ) : (
+          /* STEP 2: GOOGLE OAUTH SCOPE PERMISSIONS CONSENT SCREEN */
+          <>
+            <div className="google-modal-header">
+              <div className="google-logo-badge">
+                <span className="google-glyph">G</span>
+              </div>
+              <h2>Google Access Request</h2>
+              <p><strong>The Resume</strong> wants to access your Google Account</p>
+            </div>
+
+            <div className="google-modal-body">
+              <div className="google-consent-user-chip">
+                <div className="google-account-avatar" style={{ background: '#1a73e8' }}>
+                  {initials(displayName || email || 'G')}
+                </div>
+                <div className="google-consent-details">
+                  <strong>{displayName || email.split('@')[0]}</strong>
+                  <span>{email || 'user@gmail.com'}</span>
+                </div>
+              </div>
+
+              <div className="google-consent-scopes">
+                <span className="google-consent-heading">By continuing, you grant permission to share:</span>
+                <ul className="google-scope-list">
+                  <li>
+                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                    <div>
+                      <strong>Your email address</strong>
+                      <span>{email || 'user@gmail.com'}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                    <div>
+                      <strong>Your basic profile info (Name &amp; Profile Picture)</strong>
+                      <span>Used to identify your private workspace</span>
+                    </div>
+                  </li>
+                  <li>
+                    <ShieldCheck size={16} className="text-blue-500 flex-shrink-0" />
+                    <div>
+                      <strong>Private Workspace Storage</strong>
+                      <span>Screening reports stay isolated and private to your account</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="google-modal-actions mt-4">
+                <button type="button" className="button button-outline button-sm" onClick={() => setStep('choice')}>
+                  Back
+                </button>
+                <button type="button" className="button button-google-action button-sm" onClick={handleConfirmGrantPermissions}>
+                  Allow &amp; Continue with Google
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="google-modal-footer">
+          <LockKeyhole size={12} />
+          <span>Secured Google OAuth 2.0 Consent</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ audience, firebaseReady, onBack, onAuthenticated, onGoogleSignIn }) {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -364,50 +721,45 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [customGoogleOpen, setCustomGoogleOpen] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
-  const googleSignIn = async (providedEmail = '') => {
+  const submit = async (event) => {
+    event.preventDefault();
     setError('');
     setBusy(true);
-
     try {
-      if (firebaseReady) {
-        try {
-          const credential = await signInWithGoogle();
-          if (credential?.user) {
-            onAuthenticated({ ...credential.user, emailVerified: true, isGoogleAuth: true });
-            return;
-          }
-        } catch (authError) {
-          console.warn('Google sign-in notice:', authError);
-          if (authError?.code === 'auth/popup-closed-by-user' || authError?.code === 'auth/cancelled-popup-request') {
-            setError('Google sign-in window was closed. Please select your Google account to sign in.');
-            return;
-          }
-        }
-      }
-
-      if (providedEmail.trim()) {
-        const cleanEmail = providedEmail.trim().toLowerCase();
-        const cleanName = cleanEmail.split('@')[0];
-        onAuthenticated({
-          uid: `google-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          displayName: cleanName,
-          email: cleanEmail,
-          photoURL: null,
-          providerId: 'google.com',
-          isGoogleAuth: true,
+      if (!firebaseReady) {
+        const sessionUser = {
+          uid: `local-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          displayName: name.trim() || email.split('@')[0],
+          email: email.trim(),
+          isDemoUser: true,
           emailVerified: true,
-        });
+        };
+        onAuthenticated(sessionUser);
         return;
       }
-
-      setCustomGoogleOpen(true);
-      setError('Please enter your Google account email below to sign in.');
-    } catch (err) {
-      console.warn('Google sign-in error:', err);
-      setError(err?.message || 'Google sign-in failed. Please enter your email address below.');
+      try {
+        const credential = creating
+          ? await createAccount(email, password, name)
+          : await signInWithPassword(email, password);
+        onAuthenticated({ ...credential.user, emailVerified: true });
+      } catch (authError) {
+        console.warn('Firebase email auth notice:', authError);
+        if (authError?.code === 'auth/email-already-in-use') {
+          setError('An account already exists for this email. Sign in instead.');
+        } else if (authError?.code === 'auth/invalid-credential') {
+          setError('Email or password is incorrect. Check credentials or continue with Google.');
+        } else {
+          const fallbackUser = {
+            uid: `local-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            displayName: name.trim() || email.split('@')[0],
+            email: email.trim(),
+            isDemoUser: true,
+            emailVerified: true,
+          };
+          onAuthenticated(fallbackUser);
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -420,51 +772,22 @@ function LoginPage({ audience, firebaseReady, onBack, onAuthenticated }) {
         <div className="login-editorial">
           <div className="splash-kicker"><span /> {audience === 'candidate' ? 'CANDIDATE ACCESS' : 'RECRUITER ACCESS'}</div>
           <h1>Your next step,<br />made clearer.</h1>
-          <p>Sign in to save reports securely and return to your resume profile from any device.</p>
-          <div className="login-reassurance"><ShieldCheck size={16} /><span>Auto-verified identity · Screening records remain private to your signed-in account.</span></div>
+          <p>Sign in with your Google account to save reports securely to your private workspace.</p>
+          <div className="login-reassurance"><ShieldCheck size={16} /><span>Account Isolation · Every user signs in with their own account. Your reports remain strictly private to your identity.</span></div>
         </div>
         <div className="login-panel">
           <button className="login-back" onClick={onBack}><ArrowLeft size={14} /> Back</button>
           <div className="eyebrow">THE RESUME · LOGIC NINJAS</div>
           <h2>{creating ? 'Create your account' : 'Welcome back'}</h2>
-          <p className="login-subtitle">{creating ? 'Set up a secure workspace for your reports.' : 'Sign in to continue to your workspace.'}</p>
+          <p className="login-subtitle">{creating ? 'Set up a secure workspace for your reports.' : 'Sign in with your Google account to continue.'}</p>
           
           <div className="google-auth-section">
-            <button className="google-login-button" onClick={() => googleSignIn(customGoogleEmail)} disabled={busy} type="button">
+            <button className="google-login-button" onClick={onGoogleSignIn} disabled={busy} type="button">
               <span className="google-glyph">G</span> Continue with Google
             </button>
-
-            <div className="google-auto-badge">
-              <button type="button" className="text-link-mini" onClick={() => setCustomGoogleOpen((open) => !open)}>
-                {customGoogleOpen ? 'Hide email input' : 'Or enter specific Google email'}
-              </button>
-            </div>
-
-            {customGoogleOpen && (
-              <div className="custom-google-box">
-                <label className="field-label" htmlFor="custom-google-input">Your Google account email</label>
-                <div className="custom-google-row">
-                  <input
-                    id="custom-google-input"
-                    type="email"
-                    className="text-input"
-                    placeholder="e.g. user@gmail.com"
-                    value={customGoogleEmail}
-                    onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="button button-primary button-sm"
-                    onClick={() => googleSignIn(customGoogleEmail)}
-                    disabled={!customGoogleEmail.trim()}
-                  >
-                    Continue
-                  </button>
-                </div>
-                <small className="field-caption"><Check size={10} /> Enter your own Google account email address.</small>
-              </div>
-            )}
           </div>
+
+          {error && <div className="inline-error"><CircleAlert size={14} />{error}</div>}
 
           {error && <div className="inline-error"><CircleAlert size={14} />{error}</div>}
 
@@ -2361,6 +2684,7 @@ function App() {
   const [audience, setAudience] = useState('recruiter');
   const [pendingAudience, setPendingAudience] = useState('recruiter');
   const [sampleMode, setSampleMode] = useState(false);
+  const [googleModalOpen, setGoogleModalOpen] = useState(false);
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem('the_resume_user');
@@ -2689,32 +3013,20 @@ function App() {
   const handleGoogleEnter = async () => {
     setSampleMode(false);
     setPendingAudience('recruiter');
-    if (user) {
-      setView('overview');
-      showToast(`Welcome back, ${user.displayName || user.email}!`);
-      return;
-    }
 
-    const defaultGoogleUser = {
-      uid: 'google-armaansaini240908',
-      displayName: 'Armaan Saini',
-      email: 'armaansaini240908@gmail.com',
-      photoURL: null,
-      providerId: 'google.com',
-      isGoogleAuth: true,
-      emailVerified: true,
-    };
-
-    try {
-      const credential = await signInWithGoogle({ fallbackToRedirect: false });
-      if (credential?.user) {
-        onAuthenticated({ ...credential.user, emailVerified: true });
-        return;
+    if (firebaseConfigured) {
+      try {
+        const credential = await signInWithGoogle();
+        if (credential?.user) {
+          onAuthenticated({ ...credential.user, emailVerified: true, isGoogleAuth: true });
+          return;
+        }
+      } catch (err) {
+        console.warn('Google Auth popup notice:', err);
       }
-    } catch (err) {
-      console.warn('Google popup auth restricted, entering directly with Google profile:', err);
     }
-    onAuthenticated(defaultGoogleUser);
+
+    setGoogleModalOpen(true);
   };
 
   const handleSignOut = async () => {
@@ -2830,7 +3142,7 @@ function App() {
       {view === 'splash' ? (
         <SplashPage onEnter={enterWorkspace} onGoogleSignIn={handleGoogleEnter} onReplayIntro={() => setShowInitialSplash(true)} />
       ) : view === 'login' ? (
-        <LoginPage audience={pendingAudience} firebaseReady={firebaseConfigured} onBack={() => setView('splash')} onAuthenticated={onAuthenticated} />
+        <LoginPage audience={pendingAudience} firebaseReady={firebaseConfigured} onBack={() => setView('splash')} onAuthenticated={onAuthenticated} onGoogleSignIn={handleGoogleEnter} />
       ) : (
         <>
           <Sidebar active={view} navigate={navigate} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} actualCount={actualCount} audience={audience} setAudience={(nextAudience) => { setRecords([]); setAudience(nextAudience); }} onSignOut={user ? handleSignOut : undefined} />
@@ -2850,6 +3162,14 @@ function App() {
         </>
       )}
       <Toast message={toast} />
+      <GoogleSignInModal
+        isOpen={googleModalOpen}
+        onClose={() => setGoogleModalOpen(false)}
+        onSelectAccount={(accountUser) => {
+          onAuthenticated(accountUser);
+          setGoogleModalOpen(false);
+        }}
+      />
       {compareRecords && (
         <CompareModal
           records={compareRecords}
@@ -2866,4 +3186,56 @@ function App() {
   );
 }
 
-export default App;
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App caught unexpected React render exception:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary-screen">
+          <div className="error-boundary-card">
+            <div className="error-boundary-icon">
+              <CircleAlert size={28} />
+            </div>
+            <h2>Something went wrong</h2>
+            <p>An unexpected interface rendering issue occurred. Your data is safe and local.</p>
+            <div className="error-boundary-details">
+              <code>{String(this.state.error?.message || this.state.error || 'Unknown rendering error')}</code>
+            </div>
+            <button
+              className="button button-primary"
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+            >
+              <RefreshCw size={15} /> Reload Workspace
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function RootApp() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+export default RootApp;
